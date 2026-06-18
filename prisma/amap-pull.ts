@@ -9,7 +9,7 @@
  *   DATABASE_URL - PostgreSQL 连接字符串 (必需)
  */
 
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 
 // 高德 POI 类型定义
 type AmapPoi = {
@@ -281,7 +281,9 @@ function poiToVenue(poi: AmapPoi, baseTags: string[], city: string) {
 /**
  * 批量导入地点到数据库
  */
-async function importVenues(venues: Array<{ sourceKey: string } & Record<string, unknown>>): Promise<{ imported: number; skipped: number }> {
+async function importVenues(
+  venues: Array<Prisma.VenueCreateInput & { sourceKey: string }>
+): Promise<{ imported: number; skipped: number }> {
   let imported = 0;
   let skipped = 0;
 
@@ -299,7 +301,7 @@ async function importVenues(venues: Array<{ sourceKey: string } & Record<string,
 
       // 创建新记录
       await prisma.venue.create({
-        data: venue as any
+        data: venue
       });
 
       imported++;

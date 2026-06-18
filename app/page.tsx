@@ -49,6 +49,7 @@ export default async function Home({
     mood: "solo",
     budget: "medium",
     timeWindow: "tonight",
+    waypointCount: 3,
     useRealtimeTraffic: false,
     useSocialSignals: true
   });

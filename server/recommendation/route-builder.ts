@@ -14,6 +14,11 @@ type RouteCandidateGroup = {
   routeScore: number;
 };
 
+const DEFAULT_WAYPOINT_COUNT = 3;
+const MIN_WAYPOINT_COUNT = 2;
+const MAX_WAYPOINT_COUNT = 6;
+const ROUTE_GROUP_CANDIDATE_LIMIT = 20;
+
 function average(scores: number[]) {
   if (scores.length === 0) {
     return 0;
@@ -102,6 +107,19 @@ function hasDuplicateAddress(candidates: TrafficCandidate[]) {
   return false;
 }
 
+function desiredWaypointCount(input: RecommendInput) {
+  const requested = input.waypointCount ?? DEFAULT_WAYPOINT_COUNT;
+
+  if (!Number.isFinite(requested)) {
+    return DEFAULT_WAYPOINT_COUNT;
+  }
+
+  return Math.min(
+    MAX_WAYPOINT_COUNT,
+    Math.max(MIN_WAYPOINT_COUNT, Math.round(requested))
+  );
+}
+
 function isRouteEligible(candidate: TrafficCandidate) {
   return (
     candidate.routeEligible ??
@@ -164,6 +182,7 @@ const THEME_TAGS = {
   nightlife: ["独立音乐", "夜生活", "livehouse", "Livehouse", "酒吧", "演出", "音乐"],
   marketFood: ["市集", "快闪", "美食", "餐饮", "汉堡节", "咖啡品鉴", "葡萄酒"]
 };
+const HARD_QUIET_CULTURE_TAGS = ["书店", "展览", "艺术", "文化", "安静", "漫画", "美术馆", "画廊"];
 
 const INTEREST_ALIASES: Record<string, string[]> = {
   市集: ["市集", "集市", "快闪", "嘉年华"],
@@ -238,6 +257,25 @@ function routeThemeCoherenceScore(candidates: TrafficCandidate[]) {
   const crossThemePenalty = Math.max(0, activeThemes - 1) * 10;
 
   return Math.max(20, Math.min(100, Math.round(55 + coverage * 60 - crossThemePenalty)));
+}
+
+function candidateHasTheme(candidate: TrafficCandidate, themeTags: string[]) {
+  return candidate.tags.some((tag) =>
+    themeTags.some((themeTag) => tagMatchesTheme(tag, themeTag))
+  );
+}
+
+function hasHardThemeConflict(candidates: TrafficCandidate[]) {
+  const hasQuietOnlyPlace = candidates.some((candidate) =>
+    candidateHasTheme(candidate, HARD_QUIET_CULTURE_TAGS) &&
+    !candidateHasTheme(candidate, THEME_TAGS.nightlife)
+  );
+  const hasNightlifeOnlyPlace = candidates.some((candidate) =>
+    candidateHasTheme(candidate, THEME_TAGS.nightlife) &&
+    !candidateHasTheme(candidate, HARD_QUIET_CULTURE_TAGS)
+  );
+
+  return hasQuietOnlyPlace && hasNightlifeOnlyPlace;
 }
 
 function sourceEvidenceScore(candidates: TrafficCandidate[]) {
@@ -352,30 +390,46 @@ function scoreRouteGroup(candidates: TrafficCandidate[], input: RecommendInput) 
 
 function generateRouteGroups(candidates: TrafficCandidate[], input: RecommendInput) {
   const eligible = candidates.filter(isRouteEligible);
-  const top = (eligible.length > 0 ? eligible : candidates).slice(0, 20);
+  const top = (eligible.length > 0 ? eligible : candidates).slice(0, ROUTE_GROUP_CANDIDATE_LIMIT);
   const groups: RouteCandidateGroup[] = [];
-  const preferPairsOnly = top.length < 9;
 
-  for (let first = 0; first < top.length; first += 1) {
-    for (let second = first + 1; second < top.length; second += 1) {
-      const pair = orderCandidatesForRoute([top[first], top[second]], input);
-      groups.push({
-        candidates: pair,
-        routeScore: scoreRouteGroup(pair, input)
-      });
+  if (top.length === 0) {
+    return groups;
+  }
 
-      if (preferPairsOnly) {
-        continue;
+  function addCombinationGroups(size: number) {
+    const combination: TrafficCandidate[] = [];
+
+    function visit(startIndex: number) {
+      if (combination.length === size) {
+        const ordered = orderCandidatesForRoute(combination, input);
+        groups.push({
+          candidates: ordered,
+          routeScore: scoreRouteGroup(ordered, input)
+        });
+        return;
       }
 
-      for (let third = second + 1; third < top.length; third += 1) {
-        const triple = orderCandidatesForRoute([top[first], top[second], top[third]], input);
-        groups.push({
-          candidates: triple,
-          routeScore: scoreRouteGroup(triple, input)
-        });
+      const remainingSlots = size - combination.length;
+      for (
+        let index = startIndex;
+        index <= top.length - remainingSlots;
+        index += 1
+      ) {
+        combination.push(top[index]);
+        visit(index + 1);
+        combination.pop();
       }
     }
+
+    visit(0);
+  }
+
+  const maxSize = Math.min(desiredWaypointCount(input), top.length);
+  const minSize = maxSize >= MIN_WAYPOINT_COUNT ? MIN_WAYPOINT_COUNT : 1;
+
+  for (let size = maxSize; size >= minSize; size -= 1) {
+    addCombinationGroups(size);
   }
 
   if (groups.length === 0) {
@@ -385,10 +439,22 @@ function generateRouteGroups(candidates: TrafficCandidate[], input: RecommendInp
     }));
   }
 
+  const cleanGroups = groups.filter(
+    (group) => !hasDuplicateAddress(group.candidates) && !hasHardThemeConflict(group.candidates)
+  );
   const nonDuplicateAddressGroups = groups.filter((group) => !hasDuplicateAddress(group.candidates));
+  const coherentGroups = groups.filter((group) => !hasHardThemeConflict(group.candidates));
+  const routeGroups =
+    cleanGroups.length > 0
+      ? cleanGroups
+      : nonDuplicateAddressGroups.length > 0
+        ? nonDuplicateAddressGroups
+        : coherentGroups.length > 0
+          ? coherentGroups
+          : groups;
 
-  return (nonDuplicateAddressGroups.length > 0 ? nonDuplicateAddressGroups : groups).sort(
-    (a, b) => b.routeScore - a.routeScore
+  return routeGroups.sort(
+    (a, b) => b.candidates.length - a.candidates.length || b.routeScore - a.routeScore
   );
 }
 
@@ -400,9 +466,14 @@ function selectRouteGroups(candidates: TrafficCandidate[], input: RecommendInput
   const firstPlaceIds = new Set<string>();
   const tagSignatures = new Set<string>();
   const groups = generateRouteGroups(candidates, input);
+  const maxGroupSize = groups[0]?.candidates.length ?? 0;
   const preferredGroups = groups.filter((group) =>
     group.candidates.every((candidate) => Boolean(candidate.address) && isRouteEligible(candidate))
   );
+  const preferredMaxGroups = preferredGroups.filter(
+    (group) => group.candidates.length === maxGroupSize
+  );
+  const maxGroups = groups.filter((group) => group.candidates.length === maxGroupSize);
 
   function addGroup(group: RouteCandidateGroup) {
     const key = groupKey(group.candidates);
@@ -428,6 +499,15 @@ function selectRouteGroups(candidates: TrafficCandidate[], input: RecommendInput
     );
   }
 
+  function usesConflictingPlaceVariant(group: RouteCandidateGroup) {
+    return group.candidates.some((candidate) =>
+      usedCandidates.some(
+        (usedCandidate) =>
+          usedCandidate.id !== candidate.id && samePlaceCluster(candidate, usedCandidate)
+      )
+    );
+  }
+
   function markDiversity(group: RouteCandidateGroup) {
     const firstPlaceId = group.candidates[0]?.id;
     const tagSignature = [...new Set(group.candidates.flatMap((candidate) => candidate.tags))]
@@ -444,7 +524,7 @@ function selectRouteGroups(candidates: TrafficCandidate[], input: RecommendInput
     }
   }
 
-  for (const group of preferredGroups) {
+  for (const group of preferredMaxGroups) {
     const key = groupKey(group.candidates);
     const firstPlaceId = group.candidates[0]?.id;
     const tagSignature = [...new Set(group.candidates.flatMap((candidate) => candidate.tags))]
@@ -477,7 +557,7 @@ function selectRouteGroups(candidates: TrafficCandidate[], input: RecommendInput
   }
 
   if (selected.length < 3) {
-    for (const group of preferredGroups) {
+    for (const group of preferredMaxGroups) {
       const firstPlaceId = group.candidates[0]?.id;
 
       if (reusesSelectedPlace(group)) {
@@ -499,12 +579,44 @@ function selectRouteGroups(candidates: TrafficCandidate[], input: RecommendInput
   }
 
   if (selected.length < 3) {
-    for (const group of preferredGroups) {
+    for (const group of preferredMaxGroups) {
       if (reusesSelectedPlace(group)) {
         continue;
       }
 
       addGroup(group);
+
+      if (selected.length === 3) {
+        break;
+      }
+    }
+  }
+
+  if (selected.length < 3) {
+    for (const group of preferredMaxGroups) {
+      if (usesConflictingPlaceVariant(group)) {
+        continue;
+      }
+
+      if (addGroup(group)) {
+        markDiversity(group);
+      }
+
+      if (selected.length === 3) {
+        break;
+      }
+    }
+  }
+
+  if (selected.length < 3) {
+    for (const group of maxGroups) {
+      if (usesConflictingPlaceVariant(group)) {
+        continue;
+      }
+
+      if (addGroup(group)) {
+        markDiversity(group);
+      }
 
       if (selected.length === 3) {
         break;
@@ -519,6 +631,38 @@ function selectRouteGroups(candidates: TrafficCandidate[], input: RecommendInput
       }
 
       addGroup(group);
+
+      if (selected.length === 3) {
+        break;
+      }
+    }
+  }
+
+  if (selected.length < 3) {
+    for (const group of preferredMaxGroups) {
+      if (usesConflictingPlaceVariant(group)) {
+        continue;
+      }
+
+      if (addGroup(group)) {
+        markDiversity(group);
+      }
+
+      if (selected.length === 3) {
+        break;
+      }
+    }
+  }
+
+  if (selected.length < 3) {
+    for (const group of groups) {
+      if (usesConflictingPlaceVariant(group)) {
+        continue;
+      }
+
+      if (addGroup(group)) {
+        markDiversity(group);
+      }
 
       if (selected.length === 3) {
         break;
@@ -610,7 +754,9 @@ export function buildRoutes(
         tags: candidate.tags,
         source: candidate.source,
         sourceUrl: candidate.sourceUrl,
-        imageUrl: candidate.imageUrl
+        imageUrl: candidate.imageUrl,
+        startsAt: candidate.startsAt,
+        endsAt: candidate.endsAt
       }));
       const tags = [...new Set(slice.flatMap((candidate) => candidate.tags))].slice(0, 4);
 

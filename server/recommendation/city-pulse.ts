@@ -1,5 +1,7 @@
 import { prisma } from "@/server/db/prisma";
 import { isDemoModeEnabled, MOCK_SOURCE_NAMES } from "@/server/config/demo-mode";
+import { summarizeConditionSnapshots } from "@/server/city-state/snapshots";
+import type { CityConditionSummary } from "@/server/city-state/types";
 
 export type PulseMetric = {
   label: string;
@@ -9,6 +11,7 @@ export type PulseMetric = {
 export type CityPulseResponse = {
   topTags: PulseMetric[];
   sourceMix: PulseMetric[];
+  conditions: CityConditionSummary[];
   trafficCache: TrafficCachePulse;
   feedbackTrend: PulseMetric[];
   rankerMix: PulseMetric[];
@@ -119,7 +122,15 @@ export async function getCityPulse(input: {
       };
 
   try {
-    const [events, venues, citySignals, feedbacks, featureSnapshots, trafficSnapshots] =
+    const [
+      events,
+      venues,
+      citySignals,
+      feedbacks,
+      featureSnapshots,
+      trafficSnapshots,
+      conditionSnapshots
+    ] =
       await Promise.all([
         prisma.event.findMany({
           where: {
@@ -178,6 +189,30 @@ export async function getCityPulse(input: {
             capturedAt: "desc"
           },
           take: 80
+        }),
+        prisma.cityConditionSnapshot.findMany({
+          where: {
+            city: input.city,
+            ...(input.area
+              ? {
+                  OR: [
+                    {
+                      area: input.area
+                    },
+                    {
+                      area: null
+                    }
+                  ]
+                }
+              : {}),
+            expiresAt: {
+              gt: new Date()
+            }
+          },
+          orderBy: {
+            capturedAt: "desc"
+          },
+          take: 80
         })
       ]);
     const tagCounts = new Map<string, number>();
@@ -207,6 +242,9 @@ export async function getCityPulse(input: {
     return {
       topTags: topEntries(tagCounts, 6),
       sourceMix: topEntries(sourceCounts, 5),
+      conditions: summarizeConditionSnapshots(conditionSnapshots, {
+        area: input.area
+      }),
       trafficCache: summarizeTrafficCache(trafficSnapshots),
       feedbackTrend: feedbacks.map((item) => ({
         label: item.value,
@@ -222,6 +260,7 @@ export async function getCityPulse(input: {
     return {
       topTags: [],
       sourceMix: [],
+      conditions: [],
       trafficCache: {
         providerMix: [],
         snapshotCount: 0

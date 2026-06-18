@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { recommend, recommendRequestSchema } from "@/server/recommendation/recommend";
-import { jsonResult, requireDatabaseUrl, runTool } from "./shared";
+import { requireDatabaseUrl, runTool } from "./shared";
 
 /**
  * `recommend_routes`
@@ -38,6 +38,13 @@ const inputSchema = {
     .enum(["now", "tonight", "weekend"])
     .optional()
     .describe("When the user wants to go. now=现在, tonight=今晚, weekend=周末."),
+  waypointCount: z
+    .number()
+    .int()
+    .min(2)
+    .max(6)
+    .optional()
+    .describe("Desired number of stops/places in each route. Defaults to 3; allowed range is 2-6."),
   originAddress: z
     .string()
     .max(120)
@@ -67,7 +74,7 @@ export function registerRecommendTool(server: McpServer) {
     {
       title: "Recommend city routes",
       description:
-        "Generate 3 executable city exploration routes from CitySense. Each route has 2-3 places, traffic duration, source signals (e.g. 小红书热度, 高德POI), and an AI-explained reason. Writes a recommendation snapshot so route ids can be opened later via get_route_detail.",
+        "Generate 3 executable city exploration routes from CitySense. Each route has configurable 2-6 places, traffic duration, source signals (e.g. 小红书热度, 高德POI), and an AI-explained reason. Writes a recommendation snapshot so route ids can be opened later via get_route_detail.",
       inputSchema,
       annotations: {
         readOnlyHint: false, // persists a RecommendationLog row

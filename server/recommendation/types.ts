@@ -4,6 +4,13 @@ export type TimeWindow = "now" | "tonight" | "weekend";
 export type TravelMode = "walking" | "transit" | "driving";
 export type CandidateType = "venue" | "event";
 export type OriginSource = "browser" | "manual" | "default";
+export type RecommendExperimentVariant = "control" | "trust-aware-v1";
+
+export type RecommendExperimentMeta = {
+  name: string;
+  variant: RecommendExperimentVariant;
+  bucketKey: string;
+};
 
 export type RecommendInput = {
   userId?: string;
@@ -24,8 +31,12 @@ export type RecommendInput = {
   mood: Mood;
   budget: Budget;
   timeWindow: TimeWindow;
+  /** Desired number of stops/places in each generated route. */
+  waypointCount?: number;
   useRealtimeTraffic?: boolean;
   useSocialSignals?: boolean;
+  /** 测试/受控环境使用的实验分桶覆盖；普通请求会忽略覆盖值并走确定性分桶。 */
+  experimentVariant?: RecommendExperimentVariant;
   /**
    * 匿名用户冷启动多样性补偿（TASK2-P0-004）：
    * 调用方传入最近已曝光的 place/route title 列表（如前端记录的上次推荐结果），
@@ -118,6 +129,12 @@ export type CandidateFeatures = ScoreBreakdown & {
   profileFactors?: ProfileFactor[];
   profileHit?: boolean;
   profileVersion?: number;
+  experiment?: {
+    name: string;
+    variant: RecommendExperimentVariant;
+    trustAdjustment: number;
+    trustReason: string;
+  };
 };
 
 export type ScoredCandidate = Candidate & {
@@ -165,6 +182,56 @@ export type TrafficCandidate = ScoredCandidate & {
   adjustedScore: number;
 };
 
+export type RouteMomentFact = {
+  label: string;
+  value: string;
+  source?: string;
+};
+
+export type RouteMomentFit = {
+  urgency: "now" | "soon" | "flexible" | "unknown";
+  arrivalFit: "fits" | "tight" | "ended" | "unknown";
+  weatherFit: "good" | "ok" | "poor" | "unknown";
+  crowdFit: "quiet" | "balanced" | "busy" | "unknown";
+  whyNow: string;
+  facts: RouteMomentFact[];
+};
+
+export type RouteEvidence = {
+  placeChecks: {
+    placeId: string;
+    label: string;
+    source: string;
+    confidence: number;
+    facts: string[];
+  }[];
+  sourceFreshness: {
+    source: string;
+    label: string;
+    capturedAt?: string;
+    ageMinutes?: number;
+  }[];
+  signalRoles: {
+    source: string;
+    role: "place_authority" | "event_authority" | "trend_evidence" | "traffic_eta" | "condition_estimate";
+    label: string;
+  }[];
+  caveats: string[];
+};
+
+export type MomentRecommendationCard = {
+  headline: string;
+  message: string;
+  primaryReason: string;
+  timingHint?: string;
+  nextAction: string;
+  confidence: "high" | "medium" | "low";
+  generatedBy: "llm" | "template";
+  citedPlaceIds: string[];
+  citedSignalSources: string[];
+  citedFactLabels: string[];
+};
+
 export type RecommendedRoute = {
   id: string;
   title: string;
@@ -186,7 +253,12 @@ export type RecommendedRoute = {
     source?: string;
     sourceUrl?: string;
     imageUrl?: string;
+    startsAt?: string;
+    endsAt?: string;
   }[];
+  momentFit?: RouteMomentFit;
+  evidence?: RouteEvidence;
+  momentCard?: MomentRecommendationCard;
   reason: string;
   tips: string[];
 };
@@ -216,6 +288,7 @@ export type RecommendResponse = {
       confidence: "low" | "medium" | "high";
       degraded: boolean;
     };
+    experiment?: RecommendExperimentMeta;
     generatedAt: string;
   };
 };

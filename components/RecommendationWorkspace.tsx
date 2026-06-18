@@ -139,7 +139,7 @@ export function RecommendationWorkspace({ initialData, userId, initialUserId }: 
   );
   const [isLoading, setIsLoading] = useState(false);
   const [collapsedPanels, setCollapsedPanels] = useState<Record<FloatingPanelId, boolean>>({
-    controls: false,
+    controls: true,
     inspector: true,
     pulse: true
   });
@@ -150,7 +150,9 @@ export function RecommendationWorkspace({ initialData, userId, initialUserId }: 
   }, []);
 
   useEffect(() => {
-    setMounted(true);
+    const timeout = window.setTimeout(() => setMounted(true), 0);
+
+    return () => window.clearTimeout(timeout);
   }, []);
 
   const heatContext = useMemo(
@@ -260,6 +262,7 @@ export function RecommendationWorkspace({ initialData, userId, initialUserId }: 
               mood,
               budget,
               timeWindow,
+              waypointCount,
               useRealtimeTraffic,
               useSocialSignals: true
             }
@@ -280,6 +283,7 @@ export function RecommendationWorkspace({ initialData, userId, initialUserId }: 
               mood,
               budget,
               timeWindow,
+              waypointCount,
               useRealtimeTraffic,
               useSocialSignals: true
             };
@@ -344,6 +348,7 @@ export function RecommendationWorkspace({ initialData, userId, initialUserId }: 
               mood,
               budget,
               timeWindow,
+              waypointCount,
               useRealtimeTraffic,
               useSocialSignals: true
             }
@@ -363,6 +368,7 @@ export function RecommendationWorkspace({ initialData, userId, initialUserId }: 
               mood,
               budget,
               timeWindow,
+              waypointCount,
               useRealtimeTraffic,
               useSocialSignals: true
             };
