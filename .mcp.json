@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "citysense": {
-      "command": "node",
-      "args": ["--env-file=.env", "--import", "tsx", "server/mcp/server.ts"]
-    }
-  }
-}

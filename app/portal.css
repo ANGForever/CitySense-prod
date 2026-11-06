@@ -1,0 +1,257 @@
+/**
+ * H5 品牌门户样式。
+ * 骨架沿用 CitySense（栅格 / 重字重 / 卡片纪律），配色取 app/snow/brand.css。
+ * 主 KV 自带书法标题，所以 hero 上不再叠同名文字。
+ */
+
+.portal {
+  min-height: 100svh;
+  background: var(--brand-paper);
+  color: var(--brand-ink);
+  padding-bottom: calc(40px + env(safe-area-inset-bottom, 0px));
+}
+
+.portal-inner {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.portal-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 60px;
+  padding: 10px 0;
+}
+
+.portal-mark {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--brand-red);
+  border: 2px solid var(--brand-gold-light);
+  box-shadow: inset 0 0 0 3px rgb(255 253 248 / 22%);
+}
+
+.portal-bar-title {
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: -0.3px;
+}
+
+.portal-bar-sub {
+  margin-left: auto;
+  text-align: right;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--brand-muted);
+}
+
+.portal-hero {
+  height: 280px;
+  border-radius: var(--brand-radius-lg);
+  border: 1px solid var(--brand-line);
+  background-image: url("/brand-kv.webp");
+  background-size: cover;
+  background-position: center 42%;
+  background-color: var(--brand-red);
+}
+
+.portal-card {
+  position: relative;
+  margin: -36px 12px 0;
+  padding: 16px;
+  border-radius: var(--brand-radius-lg);
+  border: 1px solid var(--brand-line);
+  background: var(--brand-surface);
+  box-shadow: var(--brand-shadow);
+}
+
+.portal-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.portal-card-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: -0.3px;
+}
+
+.portal-card-desc {
+  margin: 4px 0 0;
+  font-size: var(--brand-caption);
+  font-weight: 700;
+  line-height: 1.6;
+  color: var(--brand-muted);
+}
+
+.portal-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 18px;
+  flex: none;
+  border: 1px solid var(--brand-red);
+  border-radius: var(--brand-radius-pill);
+  background: var(--brand-red);
+  color: #fff8ec;
+  font-size: 14px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.portal-cta:active {
+  background: #6f1f1b;
+}
+
+.portal-bird {
+  height: 170px;
+  margin-top: 14px;
+  border-radius: var(--brand-radius);
+  border: 1px solid var(--brand-line);
+  background-image: url("/park-birdview.webp");
+  background-size: cover;
+  background-position: center;
+  background-color: var(--brand-night);
+}
+
+.portal-hero-caption {
+  margin: 0 0 22px;
+  font-size: var(--brand-caption);
+  font-weight: 700;
+  line-height: 1.7;
+  color: var(--brand-muted);
+}
+
+.portal-section-title {
+  margin: 0 0 10px;
+  font-size: var(--brand-caption);
+  font-weight: 850;
+  letter-spacing: 0.6px;
+  color: var(--brand-muted);
+}
+
+.portal-entries {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.portal-entry {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  min-height: 88px;
+  padding: 14px;
+  border: 1px solid var(--brand-line);
+  border-radius: var(--brand-radius);
+  background: var(--brand-surface);
+  color: var(--brand-ink);
+}
+
+.portal-entry:active {
+  border-color: var(--brand-gold);
+  background: #fbf4e6;
+}
+
+.portal-entry-top {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.portal-entry-dot {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--brand-gold);
+}
+
+.portal-entry strong {
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.portal-entry span {
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--brand-muted);
+}
+
+.portal-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.portal-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 11px;
+  border: 1px solid var(--brand-line);
+  border-radius: var(--brand-radius-pill);
+  background: var(--brand-surface);
+  font-size: 11.5px;
+  font-weight: 800;
+}
+
+.portal-chip i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.portal-chip em {
+  font-style: normal;
+  color: var(--brand-muted);
+}
+
+.portal-foot {
+  margin-top: 26px;
+  padding-top: 16px;
+  border-top: 1px solid var(--brand-line);
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.9;
+  color: var(--brand-muted);
+}
+
+@media (max-width: 480px) {
+  .portal-hero {
+    height: 210px;
+  }
+
+  .portal-bird {
+    height: 140px;
+  }
+
+  .portal-bar-sub {
+    display: none;
+  }
+
+  .portal-card {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .portal-entries {
+    grid-template-columns: 1fr;
+  }
+
+  .portal-entry {
+    min-height: 64px;
+  }
+}

@@ -21,14 +21,15 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# prisma
-prisma/dev.db
-prisma/dev.db-journal
+# Taro 小程序子工程
+mp/node_modules
+mp/dist
+mp/.temp
+mp/.swc
+mp/project.private.config.json
 
-# local docker service state
-docker/xiaohongshu-mcp/data
-docker/xiaohongshu-mcp/images
-data/damai-session
+# 打卡系统本地文件后端
+.data
 
 # system
 .DS_Store

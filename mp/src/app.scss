@@ -1,0 +1,530 @@
+/**
+ * 全局样式：保留 CitySense 的栅格 / 重字重 / 组件纪律，
+ * 配色按甲方红金主 KV 换成全站统一品牌色（见 styles/brand.scss）。
+ * 单位写 px，由 Taro pxtransform 按 designWidth=750 转成 rpx。
+ * 小程序端不使用 CSS 框架、不引入 Web 字体。
+ */
+
+@use "./styles/brand.scss" as *;
+
+page {
+  background: $brand-paper;
+  color: $brand-ink;
+  font-size: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+}
+
+.page {
+  min-height: 100vh;
+  padding: 20px 16px calc(32px + env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
+}
+
+/* 首页内容不满一屏时把脚注推到底，避免上半屏拥挤、下半屏整片空白 */
+.page-home {
+  display: flex;
+  flex-direction: column;
+}
+
+.page-home .footnote {
+  margin-top: auto;
+  padding-top: 28px;
+}
+
+/* ---------- Hero ---------- */
+.hero {
+  padding: 22px 18px 20px;
+  background: #fff;
+  border: 1px solid #d9e0d8;
+  border-left: 4px solid #087f7a;
+  border-radius: 8px;
+  box-shadow: 0 10px 24px rgba(31, 47, 41, 0.07);
+}
+
+.hero-kicker {
+  display: block;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 1.6px;
+  color: #6a776f;
+}
+
+.hero-title {
+  display: block;
+  margin-top: 10px;
+  font-size: 30px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  color: #1d2a26;
+}
+
+.hero-desc {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.7;
+  color: #6a776f;
+}
+
+.hero-stats {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.stat {
+  padding: 5px 10px;
+  margin: 0 6px 6px 0;
+  background: #f0f4f0;
+  border: 1px solid #d9e0d8;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #6a776f;
+}
+
+.stat-strong {
+  font-size: 14px;
+  font-weight: 900;
+  color: #1d2a26;
+}
+
+.stat-note {
+  display: block;
+  margin-top: 2px;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1.6;
+  color: #6a776f;
+}
+
+/* ---------- 通用区块 ---------- */
+.section-title {
+  display: block;
+  margin: 26px 0 10px;
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.4px;
+  color: #6a776f;
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  padding: 16px 16px;
+  margin-bottom: 10px;
+  background: #fff;
+  border: 1px solid #d9e0d8;
+  border-left: 4px solid #087f7a;
+  border-radius: 8px;
+  box-shadow: 0 10px 24px rgba(31, 47, 41, 0.07);
+}
+
+.card-muted {
+  background: #f7f8f5;
+  border-left-color: #b78419;
+}
+
+.card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.card-title {
+  display: block;
+  font-size: 15px;
+  font-weight: 900;
+  color: #1d2a26;
+}
+
+.card-desc {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.6;
+  color: #6a776f;
+}
+
+.card-arrow {
+  margin-left: 10px;
+  font-size: 18px;
+  color: #087f7a;
+}
+
+.badge {
+  display: inline-block;
+  padding: 1px 6px;
+  margin-left: 8px;
+  border: 1px solid #d9e0d8;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 850;
+  color: #6a776f;
+  vertical-align: middle;
+}
+
+.badge-accent {
+  color: #025d59;
+  background: rgba(8, 127, 122, 0.10);
+  border-color: rgba(8, 127, 122, 0.28);
+}
+
+/* ---------- 按钮 ---------- */
+.btn-primary {
+  display: block;
+  width: 100%;
+  padding: 13px 16px;
+  background: #087f7a;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 850;
+  border: 0;
+  border-radius: 8px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.btn-primary::after {
+  border: 0;
+}
+
+.btn-ghost {
+  display: block;
+  width: 100%;
+  padding: 13px 16px;
+  background: #fff;
+  color: #025d59;
+  font-size: 14px;
+  font-weight: 850;
+  border: 1px solid #d9e0d8;
+  border-radius: 8px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.btn-ghost::after {
+  border: 0;
+}
+
+.btn-row {
+  display: flex;
+  margin-top: 18px;
+}
+
+.btn-row .btn-primary,
+.btn-row .btn-ghost {
+  flex: 1;
+}
+
+.btn-row .btn-ghost {
+  margin-left: 10px;
+}
+
+/* ---------- 状态与说明 ---------- */
+.notice {
+  padding: 11px 13px;
+  margin-top: 12px;
+  background: #fdf6e8;
+  border: 1px solid #e6d3a3;
+  border-radius: 8px;
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.7;
+  color: #7a5c12;
+}
+
+.notice-title {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 11.5px;
+  font-weight: 900;
+  color: #6b4f0c;
+}
+
+.notice-line {
+  display: block;
+}
+
+.notice-config {
+  background: #f7f8f5;
+  border-color: #d9e0d8;
+  color: #4a5a52;
+}
+
+.notice-config .notice-title {
+  color: #334a43;
+}
+
+.muted {
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.8;
+  color: #6a776f;
+}
+
+.footnote {
+  margin-top: 28px;
+  padding-top: 14px;
+  border-top: 1px solid #d9e0d8;
+}
+
+.strong {
+  font-weight: 900;
+  color: #1d2a26;
+}
+
+/* ---------- 展品详情 ---------- */
+.spot-art {
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e7f2ef;
+  border-radius: 8px;
+  color: #087f7a;
+  font-size: 34px;
+  font-weight: 900;
+  letter-spacing: 2px;
+}
+
+.story {
+  display: block;
+  margin-top: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.9;
+  color: #334a43;
+}
+
+.tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.tag {
+  padding: 3px 8px;
+  margin: 0 6px 6px 0;
+  background: #f0f4f0;
+  border: 1px solid #d9e0d8;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #025d59;
+}
+
+/* ---------- 错误页 ---------- */
+.error-icon {
+  display: block;
+  font-size: 40px;
+  text-align: center;
+  margin: 40px 0 12px;
+}
+
+.error-title {
+  display: block;
+  font-size: 19px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.error-desc {
+  display: block;
+  margin: 10px 0 24px;
+  text-align: center;
+}
+
+/* ---------- 品牌首页 / 扫码页（2026-11-06 统一色系） ---------- */
+.brand-home {
+  padding: 0 16px calc(28px + env(safe-area-inset-bottom, 0px));
+}
+
+.brand-hero {
+  margin: 16px 0 14px;
+  padding: 24px 18px;
+  border-radius: $brand-radius-lg;
+  background: linear-gradient(160deg, #a83232, #6f1f1b);
+  border: 1px solid $brand-gold;
+}
+
+.brand-hero-kicker {
+  display: block;
+  font-size: 12px;
+  letter-spacing: 4px;
+  color: $brand-gold-light;
+}
+
+.brand-hero-title {
+  display: block;
+  margin-top: 10px;
+  font-size: 30px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: #f7e6bd;
+}
+
+.brand-hero-slogan {
+  display: block;
+  margin-top: 12px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: #f0dcc0;
+}
+
+.brand-hero-full {
+  display: block;
+  margin-top: 14px;
+  font-size: 10px;
+  color: $brand-gold-light;
+}
+
+.brand-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 52px;
+  padding: 0 20px;
+  border-radius: 26px;
+  background: $brand-red;
+  color: #fff8ec;
+  font-size: 16px;
+  font-weight: 850;
+}
+
+.brand-entries {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.brand-entry {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 78px;
+  padding: 14px;
+  box-sizing: border-box;
+  border-radius: $brand-radius;
+  background: $brand-surface;
+  border: 1px solid $brand-line;
+}
+
+.brand-entry-title {
+  display: block;
+  font-size: 14px;
+  font-weight: 850;
+  color: $brand-ink;
+}
+
+.brand-entry-desc {
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: $brand-muted;
+}
+
+.brand-notice {
+  margin-top: 16px;
+  padding: 14px;
+  border-radius: $brand-radius;
+  background: #f6e7c8;
+  border: 1px solid $brand-line;
+}
+
+.brand-notice text {
+  display: block;
+  font-size: 11px;
+  line-height: 1.8;
+  color: #7a5510;
+}
+
+.brand-foot {
+  margin-top: 20px;
+}
+
+.brand-foot text {
+  display: block;
+  font-size: 10px;
+  line-height: 1.8;
+  color: $brand-muted;
+}
+
+/* ---------- 扫码页 ---------- */
+.brand-scan {
+  padding-top: 24px;
+}
+
+.brand-scan-card {
+  padding: 20px;
+  border-radius: $brand-radius-lg;
+  background: $brand-surface;
+  border: 1px solid $brand-line;
+}
+
+.brand-scan-title {
+  display: block;
+  font-size: 18px;
+  font-weight: 900;
+  color: $brand-ink;
+}
+
+.brand-scan-desc {
+  display: block;
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.8;
+  color: $brand-muted;
+}
+
+.brand-scan-state {
+  display: block;
+  margin-top: 18px;
+  padding: 12px;
+  border-radius: $brand-radius;
+  background: #f6e7c8;
+  font-size: 12px;
+  color: #7a5510;
+}
+
+.brand-scan-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.brand-btn-primary,
+.brand-btn-ghost {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  min-height: 44px;
+  border-radius: 22px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.brand-btn-primary {
+  background: $brand-red;
+  color: #fff8ec;
+}
+
+.brand-btn-ghost {
+  background: $brand-paper;
+  border: 1px solid $brand-line;
+  color: $brand-ink;
+}
+
+.brand-scan-note {
+  margin-top: 16px;
+}
+
+.brand-scan-note text {
+  display: block;
+  font-size: 11px;
+  line-height: 1.8;
+  color: $brand-muted;
+}

@@ -1,0 +1,31 @@
+/**
+ * 青唐冰雪烩品牌 token（与 app/snow/brand.css 手工对齐）。
+ * 小程序端只下发颜色 / 字号 / 圆角；px 由 Taro pxtransform 处理。
+ */
+
+$brand-red: #8e2b26;
+$brand-red-strong: #a83232;
+$brand-gold: #d9b36c;
+$brand-gold-light: #e8c87a;
+$brand-paper: #f7f2e8;
+$brand-surface: #fffdf8;
+$brand-ink: #2a1a18;
+$brand-night: #1b2a3a;
+$brand-muted: #7a6a5c;
+$brand-line: #e3d8c2;
+$brand-radius: 14px;
+$brand-radius-lg: 20px;
+
+page {
+  --brand-red: #{$brand-red};
+  --brand-red-strong: #{$brand-red-strong};
+  --brand-gold: #{$brand-gold};
+  --brand-gold-light: #{$brand-gold-light};
+  --brand-paper: #{$brand-paper};
+  --brand-surface: #{$brand-surface};
+  --brand-ink: #{$brand-ink};
+  --brand-muted: #{$brand-muted};
+  --brand-line: #{$brand-line};
+  background: $brand-paper;
+  color: $brand-ink;
+}

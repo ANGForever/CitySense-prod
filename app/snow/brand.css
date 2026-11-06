@@ -1,0 +1,41 @@
+/**
+ * 青唐冰雪烩品牌 token（2026-11-06 定稿）。
+ *
+ * 全站内外统一：H5 门户 /、H5 地图 /snow、Taro 原生首页共用同一组值。
+ * CitySense 只保留栅格、重字重与组件纪律；配色按甲方红金主 KV 换掉，
+ * 深青 #087f7a 退出主色。地图画布仍用高德白天全彩，不在此文件管辖内。
+ *
+ * 与 mp/src/styles/brand.scss 手工对齐（跨技术栈无法复用组件），改值时两边一起改。
+ */
+
+:root {
+  --brand-red: #8e2b26;
+  --brand-red-strong: #a83232;
+  --brand-gold: #d9b36c;
+  --brand-gold-light: #e8c87a;
+  --brand-paper: #f7f2e8;
+  --brand-surface: #fffdf8;
+  --brand-ink: #2a1a18;
+  --brand-night: #1b2a3a;
+  --brand-muted: #7a6a5c;
+  --brand-line: #e3d8c2;
+
+  --brand-radius: 14px;
+  --brand-radius-lg: 20px;
+  --brand-radius-pill: 999px;
+  --brand-shadow: 0 12px 32px rgb(42 26 24 / 14%);
+  --brand-title: 30px;
+  --brand-body: 15px;
+  --brand-caption: 12px;
+
+  /* 覆盖 CitySense 语义变量，让未改写的旧组件也跟着统一 */
+  --bg: var(--brand-paper);
+  --surface: var(--brand-surface);
+  --surface-muted: #f0e8d8;
+  --ink: var(--brand-ink);
+  --muted: var(--brand-muted);
+  --line: var(--brand-line);
+  --accent: var(--brand-red);
+  --accent-strong: #6f1f1b;
+  --shadow: var(--brand-shadow);
+}

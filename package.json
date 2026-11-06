@@ -1,5 +1,5 @@
 {
-  "name": "citysense",
+  "name": "qingtang-ice-snow",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -7,45 +7,29 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test": "node --import tsx --test tests/**/*.test.ts",
     "typecheck": "tsc --noEmit",
-    "worker:ingest": "tsx workers/ingest-worker.ts",
-    "worker:normalize": "tsx workers/normalize-worker.ts",
-    "mcp:server": "node --env-file=.env --import tsx server/mcp/server.ts",
-    "mcp:http": "node --env-file=.env --import tsx server/mcp/http-server.ts",
-    "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
-    "db:seed": "prisma db seed"
+    "test": "node --import tsx --test tests/snow/*.test.ts"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0",
-    "@prisma/client": "^6.19.3",
-    "bullmq": "^5.78.0",
-    "clsx": "^2.1.1",
-    "express": "^5.2.1",
     "ioredis": "^5.10.1",
     "lucide-react": "^1.17.0",
     "next": "^16.2.7",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
+    "three": "0.162.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3.3.5",
     "@tailwindcss/postcss": "^4.3.0",
-    "@types/express": "^5.0.6",
     "@types/node": "^25.9.1",
     "@types/react": "^19.2.16",
     "@types/react-dom": "^19.2.3",
+    "@types/three": "0.162.0",
     "eslint": "^9.39.4",
     "eslint-config-next": "^16.2.7",
     "postcss": "^8.5.15",
-    "prisma": "^6.19.3",
     "tailwindcss": "^4.3.0",
     "tsx": "^4.22.4",
     "typescript": "^5.9.3"
-  },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
   }
 }

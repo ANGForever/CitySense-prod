@@ -1,0 +1,791 @@
+/* 冰雪节地图页。沿用 CitySense 的纸白 + 白色浮层卡 + 深青主色语言。
+   所有规则收在 .snow-stage 下，避免影响 /snow/preview。 */
+
+.snow-stage {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--ink);
+  /* 手机端所有浮层共用这两个基准，避免各自硬编码 top/bottom 后互相打架 */
+  --snow-top-gap: max(12px, env(safe-area-inset-top, 0px));
+  /* 390×844 视口实测：顶栏约 111px、筛选 44px、工具条 50px、底部面板 144px */
+  --snow-panel-h: 144px;
+  --snow-bottom-gap: calc(12px + env(safe-area-inset-bottom, 0px));
+}
+
+/* 触屏上取消 300ms 双击判定，地图工具条的连续点击更跟手 */
+.snow-stage button {
+  touch-action: manipulation;
+}
+
+.snow-canvas {
+  position: absolute;
+  inset: 0;
+}
+
+/* 二维兜底：等比缩放居中，不拉伸 */
+.snow-schematic {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+}
+
+.snow-schematic > svg {
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+}
+
+/* ── 左上角信息卡 ── */
+.snow-hud {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 20;
+  max-width: calc(100% - 88px);
+  padding: 11px 14px;
+  border-radius: 8px;
+  background: rgb(255 255 255 / 92%);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(10px);
+}
+
+.snow-hud-kicker {
+  display: block;
+  font-size: 9.5px;
+  font-weight: 850;
+  letter-spacing: 1.4px;
+  color: var(--muted);
+}
+
+.snow-hud-title {
+  margin: 2px 0 0;
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: -0.2px;
+}
+
+.snow-hud-meta {
+  margin: 3px 0 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.snow-reset {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 20;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 92%);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  color: var(--accent-strong);
+}
+
+.snow-reset:disabled {
+  opacity: 0.42;
+}
+
+/* ── 降级提示 ── */
+.snow-notice {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  top: 108px;
+  z-index: 21;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 5px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 11.5px;
+  background: rgb(255 245 228 / 96%);
+  border: 1px solid rgb(183 132 25 / 42%);
+  box-shadow: 0 8px 20px rgb(31 47 41 / 8%);
+  color: #7a5510;
+}
+
+.snow-notice strong {
+  font-weight: 850;
+}
+
+.snow-notice span {
+  color: #8a6a2a;
+}
+
+/* ── 底部控制卡 ── */
+.snow-dock {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 11px;
+  border-radius: 10px;
+  background: rgb(255 255 255 / 94%);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(10px);
+}
+
+.snow-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 11px;
+}
+
+.snow-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.5px;
+  font-weight: 800;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.snow-legend-item i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: block;
+}
+
+.snow-routes {
+  display: flex;
+  gap: 7px;
+  margin: 0 -1px;
+  padding: 0 1px;
+}
+
+.snow-route-chip {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 52px;
+  display: grid;
+  align-content: center;
+  gap: 1px;
+  padding: 0 8px;
+  border-radius: 6px;
+  text-align: left;
+  background: var(--surface-muted);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  color: var(--ink);
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.snow-route-chip.tone-coral {
+  border-left-color: var(--coral);
+}
+
+.snow-route-chip.tone-amber {
+  border-left-color: var(--amber);
+}
+
+.snow-route-chip strong {
+  font-size: 12px;
+  font-weight: 850;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.snow-route-chip em {
+  font-style: normal;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.snow-route-chip.active {
+  background: var(--surface);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.snow-route-stops {
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ── 展品卡 ── */
+.snow-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 130;
+  background: rgb(24 33 29 / 34%);
+  border: 0;
+  cursor: default;
+}
+
+.snow-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 140;
+  display: flex;
+  flex-direction: column;
+  max-height: 74vh;
+  padding: 6px 18px calc(14px + env(safe-area-inset-bottom, 0px));
+  border-radius: 14px 14px 0 0;
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+  box-shadow: 0 -18px 40px rgb(31 47 41 / 16%);
+  animation: snow-sheet-in 0.2s ease-out;
+}
+
+@keyframes snow-sheet-in {
+  from {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.snow-sheet-grip {
+  width: 34px;
+  height: 4px;
+  margin: 0 auto 10px;
+  border-radius: 4px;
+  background: var(--line);
+}
+
+.snow-sheet-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.snow-sheet-kicker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  font-weight: 850;
+}
+
+.snow-sheet-kicker i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: block;
+}
+
+.snow-unverified {
+  font-style: normal;
+  margin-left: 4px;
+  padding: 1px 6px;
+  font-size: 9.5px;
+  font-weight: 800;
+  border-radius: 4px;
+  color: #8a6a2a;
+  background: rgb(183 132 25 / 12%);
+  border: 1px solid rgb(183 132 25 / 32%);
+}
+
+.snow-sheet-title {
+  margin: 3px 0 0;
+  font-size: 21px;
+  font-weight: 900;
+  letter-spacing: -0.3px;
+}
+
+.snow-sheet-close {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--surface-muted);
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.snow-sheet-body {
+  margin-top: 10px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.snow-sheet-summary {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.7;
+}
+
+.snow-sheet-story {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.9;
+  color: #33413b;
+}
+
+.snow-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.snow-tags span {
+  padding: 3px 9px;
+  font-size: 10.5px;
+  font-weight: 800;
+  border-radius: 5px;
+  color: var(--accent-strong);
+  background: rgb(8 127 122 / 8%);
+  border: 1px solid rgb(8 127 122 / 20%);
+}
+
+.snow-sheet-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.snow-btn {
+  height: 44px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 850;
+  background: var(--surface-muted);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  transition: background 160ms ease, transform 160ms ease;
+}
+
+.snow-btn:hover {
+  transform: translateY(-1px);
+}
+
+.snow-btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
+}
+
+.snow-btn-primary:hover {
+  background: var(--accent-strong);
+}
+
+.snow-btn-done {
+  color: var(--muted);
+  border-style: dashed;
+  cursor: default;
+}
+
+.snow-btn-done:hover {
+  transform: none;
+}
+/* Daytime guide: controls stay compact so the geographic scene remains the focus. */
+.snow-topbar { position:absolute;top:max(16px,env(safe-area-inset-top));left:20px;width:360px;z-index:30;display:grid;gap:12px; }
+.snow-brand { display:flex;align-items:center;gap:11px;padding:13px 16px;background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:12px;box-shadow:0 6px 24px #234b4610; }
+.snow-brand-icon { display:grid;place-items:center;width:42px;height:42px;background:#e7f2ef;border-radius:10px;color:var(--accent); }
+.snow-eyebrow { font-size:9px;letter-spacing:1.7px;color:var(--muted);font-weight:700; }
+.snow-brand h1 { margin:3px 0 0;font-size:21px;font-weight:850;letter-spacing:1px; }
+.snow-day { margin-left:auto;font-size:10px;color:#876d3d;background:#f7f2e6;padding:5px 8px;border-radius:20px; }
+.snow-search { display:flex;align-items:center;gap:9px;background:#fff;border:1px solid var(--line);padding:12px 14px;border-radius:10px;color:var(--muted);box-shadow:0 3px 15px #234b4608; }
+.snow-search input { background:none;border:0;outline:0;min-width:0;width:100%;font-size:12px;color:var(--ink); }
+.snow-search:focus-within { outline:2px solid #087f7a55; }
+.snow-search button { display:grid;place-items:center;background:none;border:0;color:var(--muted); }
+.snow-filters { position:absolute;left:400px;top:24px;right:80px;z-index:25;display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;padding:2px; }
+.snow-filters button { white-space:nowrap;display:flex;align-items:center;gap:6px;border:1px solid #dce5df;background:#fffffff2;padding:10px 13px;border-radius:24px;font-size:11px;font-weight:650;color:#53665e;box-shadow:0 2px 8px #193e3810; }
+.snow-filters button.active { color:white;background:#087f7a;border-color:#087f7a; }
+.snow-filters i { width:6px;height:6px;border-radius:50%; }
+.snow-map-tools { position:absolute;right:20px;top:90px;display:grid;gap:2px;background:#ffffffed;border:1px solid var(--line);border-radius:10px;padding:5px;z-index:25;box-shadow:var(--shadow); }
+.snow-map-tools button { display:grid;place-items:center;width:35px;height:36px;background:none;border:0;color:#31554c;border-radius:6px; }
+.snow-map-tools button:hover { background:#e7f2ef; }
+.snow-map-tools button:disabled { opacity:.35; }
+.snow-map-tools > span { height:1px;background:var(--line);margin:3px 6px; }
+.snow-map-labels { position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:12; }
+.snow-map-label { position:absolute;top:0;left:0;border:1px solid #c7dad5;background:#fffffff2;color:#294e47;font-size:11px;font-weight:650;line-height:1.3;padding:6px 9px;border-radius:6px;white-space:nowrap;box-shadow:0 3px 9px #234b461a;pointer-events:auto; }
+.snow-map-label i { display:inline-block;width:5px;height:5px;background:#278c94;border-radius:50%;margin-right:5px; }
+.snow-map-label.selected { background:#087f7a;color:#fff;border-color:#fff;z-index:2; }
+.snow-map-label.selected i { background:#fff; }
+.snow-map-label.gate { background:#f8f3e8;color:#7e6542;border-color:#daceb6;pointer-events:none;font-size:10px; }
+.snow-data-note { position:absolute;left:20px;bottom:30px;font-size:10px;z-index:21;padding:5px 8px;border-radius:5px;background:#ffffffe0;color:#6a776f; }
+.snow-guide-panel { position:absolute;left:20px;bottom:66px;z-index:22;width:360px;background:#ffffffF5;border:1px solid var(--line);border-radius:14px;box-shadow:0 14px 44px #183e3820;overflow:hidden;backdrop-filter:blur(12px); }
+.snow-panel-head { display:flex;justify-content:space-between;align-items:center;padding:0 16px;border-bottom:1px solid #e8eeea; }
+.snow-panel-head > span { font-size:10px;color:var(--muted); }
+.snow-panel-tabs { display:flex;gap:18px; }
+.snow-panel-tabs button { display:flex;align-items:center;gap:5px;padding:15px 0 12px;font-size:12px;font-weight:700;background:none;border:0;border-bottom:2px solid transparent;color:#819087; }
+.snow-panel-tabs button.active { color:#087f7a;border-bottom-color:#087f7a; }
+.snow-panel-title { padding:16px 16px 12px; }
+.snow-panel-title h2 { font-size:16px;letter-spacing:-.3px;margin:0;font-weight:800; }
+.snow-panel-title p { font-size:11px;color:#7a887f;margin:6px 0 0; }
+.snow-featured { display:grid;padding:0 12px 12px;gap:5px;max-height:260px;overflow-y:auto; }
+.snow-feature-card { display:flex;align-items:center;gap:12px;text-align:left;padding:8px;background:#fff;border:1px solid #e6ede8;border-radius:8px;color:var(--ink); }
+.snow-feature-card:hover { background:#f2f7f3;border-color:#b9d8ca; }
+.snow-feature-card > svg { margin-left:auto;flex-shrink:0;color:#60877a; }
+.snow-feature-card strong { display:block;font-size:12px;font-weight:750; }
+.snow-feature-card small { display:block;margin-top:5px;font-size:10px;color:#859187; }
+.snow-card-art { position:relative;display:grid;place-items:center;width:52px;height:48px;flex-shrink:0;background:linear-gradient(135deg,#e3f3f6,#b9dce6);color:#4995aa;border-radius:6px; }
+.snow-card-art em { position:absolute;bottom:3px;right:4px;font-size:8px;font-style:normal;color:#376a70; }
+.art-snow-play { background:linear-gradient(135deg,#edf5e8,#c8dfce);color:#6a9c7c; }
+.art-lantern,.art-prayer { background:linear-gradient(135deg,#fff5e5,#ecd8bc);color:#c79457; }
+.snow-guide-panel .snow-routes { margin:0 12px 16px;gap:6px; }
+.snow-guide-panel .snow-route-chip { padding:12px 7px;min-height:68px; }
+.snow-route-chip strong { font-size:12px; }
+.snow-route-chip em { font-size:10px; }
+.snow-route-stops { margin:0 16px 16px;font-size:11px;line-height:1.9;max-height:88px;overflow:auto; }
+.snow-empty { font-size:12px;color:var(--muted);padding:12px; }
+.snow-loading { position:absolute;top:45%;left:50%;transform:translateX(-50%);z-index:20;display:flex;gap:10px;align-items:center;background:#fff;padding:16px;border:1px solid var(--line);border-radius:10px;font-size:12px;box-shadow:var(--shadow); }
+.snow-notice { top:160px;left:20px;right:auto;max-width:360px;font-size:11px; }
+.snow-sheet { left:20px;right:auto;bottom:66px;width:360px;max-height:55vh;border-radius:14px; }
+.snow-story-details { font-size:12px;margin-top:12px;color:#55776b; }
+.snow-story-details summary { cursor:pointer;font-weight:650; }
+.snow-stage button:focus-visible { outline:2px solid #087f7a;outline-offset:3px; }
+@media (max-width: 700px) {
+  /* 顶栏压到约 84px：品牌卡 + 搜索框，白天标签在窄屏隐去 */
+  .snow-topbar { top:var(--snow-top-gap);left:12px;right:12px;width:auto;gap:6px; }
+  .snow-brand { padding:7px 10px;box-shadow:0 3px 15px #234b460c; }
+  .snow-brand h1 { font-size:16px; }
+  .snow-brand-icon { width:30px;height:30px;border-radius:8px; }
+  .snow-eyebrow { font-size:8.5px;letter-spacing:1.2px; }
+  .snow-day { display:none; }
+  .snow-search { padding:8px 10px; }
+  .snow-search input { font-size:13px; }
+
+  /* 分类筛选：触控目标 ≥40px，位置由顶部基准推导，不再写死 141px */
+  .snow-filters { top:calc(var(--snow-top-gap) + 119px);left:12px;right:0;padding-right:12px; }
+  .snow-filters button { min-height:40px;padding:10px 13px;font-size:12px; }
+
+  /* 工具条由竖排 6 层改横向一排：右侧中段不再被约 230px 高的按钮列占满 */
+  .snow-map-tools { top:calc(var(--snow-top-gap) + 173px);right:12px;display:flex;flex-direction:row;align-items:center;gap:2px;padding:4px; }
+  .snow-map-tools button { width:40px;height:40px;flex:0 0 40px; }
+  .snow-map-tools > span { width:1px;height:20px;margin:0 4px; }
+
+  /* 降级提示与合规标注都排在工具条下方，互不重叠 */
+  .snow-notice { top:calc(var(--snow-top-gap) + 231px);left:12px;right:12px;width:auto;max-width:none;font-size:11px; }
+  .snow-data-note { top:auto;left:auto;right:12px;bottom:calc(var(--snow-panel-h) + var(--snow-bottom-gap) + 8px);font-size:9px;background:#ffffffe8; }
+
+  /* 底部面板压缩；AI 入口收进标题栏，去掉 bottom:255px 这类跟内容高度绑定的死值 */
+  .snow-guide-panel { left:12px;right:12px;width:auto;bottom:var(--snow-bottom-gap); }
+  .snow-panel-head { padding:0 12px; }
+  .snow-panel-tabs button { min-height:40px;padding:10px 0 8px;font-size:12px; }
+  .snow-panel-title { padding:10px 12px 6px; }
+  .snow-panel-title h2 { font-size:14px; }
+  .snow-panel-title p { display:none; }
+  .snow-featured { display:flex;overflow-x:auto;max-height:84px;padding:0 10px 10px; }
+  .snow-feature-card { flex:0 0 190px;gap:8px;padding:6px; }
+  .snow-card-art { width:38px;height:40px; }
+  .snow-guide-panel .snow-route-chip { min-height:60px;padding:8px 6px; }
+  .snow-guide-panel .snow-routes { margin:0 12px 12px; }
+  .snow-route-stops { margin:0 12px 12px; }
+
+  .snow-sheet { left:12px;right:12px;width:auto;bottom:var(--snow-bottom-gap);max-height:52vh; }
+}
+
+.snow-featured { scrollbar-width:none; }
+.snow-featured::-webkit-scrollbar { display:none; }
+
+/* AI guide shares the map's white / teal visual language. */
+.snow-chat-launch { position:absolute;right:20px;bottom:55px;z-index:27;display:flex;align-items:center;gap:8px;padding:13px 17px;border:1px solid #026660;border-radius:24px;background:#087f7a;color:white;font-size:13px;font-weight:750;box-shadow:0 7px 22px #025d5933; }
+.snow-chat-panel { position:absolute;right:20px;bottom:55px;width:380px;height:min(620px,calc(100dvh - 140px));z-index:35;display:flex;flex-direction:column;background:#fffffff7;border:1px solid var(--line);border-radius:14px;box-shadow:0 16px 48px #183e3825;overflow:hidden;backdrop-filter:blur(16px); }
+.snow-chat-head { display:flex;align-items:center;gap:10px;padding:15px 16px;border-bottom:1px solid #e5ece8; }
+.snow-chat-icon { display:grid;place-items:center;width:36px;height:36px;border-radius:9px;background:#e7f2ef;color:#087f7a; }
+.snow-chat-head h2 { margin:0;font-size:15px;font-weight:800; }
+.snow-chat-head p { margin:4px 0 0;font-size:10px;color:#7a887f; }
+.snow-chat-head > button { margin-left:auto;background:#f0f5f1;border:0;border-radius:50%;width:30px;height:30px;display:grid;place-items:center;color:#60786e; }
+.snow-chat-context { padding:9px 16px;background:#f3f7f3;color:#5a7669;font-size:10px; }
+.snow-chat-messages { flex:1;min-height:0;overflow:auto;padding:16px;overscroll-behavior:contain; }
+.snow-chat-welcome { color:#365b50; }
+.snow-chat-welcome > svg { color:#087f7a;margin-top:12px; }
+.snow-chat-welcome h3 { font-size:16px;line-height:1.6; }
+.snow-chat-welcome p { font-size:12px;line-height:1.8;color:#74867b; }
+.snow-chat-welcome > div { display:grid;gap:8px;margin-top:18px; }
+.snow-chat-welcome button { display:flex;align-items:center;justify-content:space-between;text-align:left;padding:12px;border:1px solid #dce8df;background:#fff;border-radius:8px;font-size:12px;color:#397465; }
+.snow-chat-turn { margin:0 0 16px;font-size:12px;line-height:1.9; }
+.snow-chat-turn > p { margin:5px 0 0;white-space:pre-wrap;overflow-wrap:anywhere; }
+.snow-chat-author { font-size:10px;color:#6e8477; }
+.snow-chat-turn.user { margin-left:30px;padding:10px 12px;background:#eaf4ee;border-radius:9px; }
+.snow-chat-turn.assistant { padding-right:10px; }
+.snow-chat-card { display:grid;gap:5px;margin-top:10px;border:1px solid #d4e5db;background:#fff;border-radius:9px;padding:12px; }
+.snow-chat-card strong { color:#224b40;font-size:13px; }
+.snow-chat-card small { font-size:11px;color:#74867b;line-height:1.7; }
+.snow-chat-card button { display:flex;justify-content:space-between;align-items:center;margin-top:4px;padding:8px 0 0;border:0;border-top:1px solid #e8eeea;background:none;color:#087f7a;text-align:left;font-size:12px;font-weight:700; }
+.snow-chat-compose { display:flex;align-items:center;gap:8px;margin:0 12px;padding:10px;border:1px solid #d3e1d7;border-radius:9px;background:#fff; }
+.snow-chat-compose:focus-within { border-color:#087f7a; }
+.snow-chat-compose textarea { flex:1;min-width:0;resize:none;border:0;outline:0;background:transparent;font-family:inherit;font-size:12px;line-height:1.7;color:var(--ink); }
+.snow-chat-compose button { display:grid;place-items:center;flex:0 0 34px;height:34px;border:0;border-radius:8px;background:#087f7a;color:white; }
+.snow-chat-compose button:disabled { opacity:.4; }
+.snow-chat-footnote { font-size:9px;text-align:center;color:#89958c;margin:9px 10px 11px; }
+.snow-chat-pending { display:flex;align-items:center;gap:8px;font-size:11px;color:#6c8276; }
+.snow-chat-pending svg,.snow-chat-compose button:disabled svg { animation:snow-spin 1.4s linear infinite; }
+.snow-chat-error { padding:10px;border:1px solid #e7d7ba;background:#fff9ed;border-radius:8px;font-size:12px;color:#8e6c37; }
+.snow-chat-error p { margin:0; }
+.snow-chat-error button { background:transparent;border:0;color:#087f7a;font-size:11px;margin-top:7px; }
+.snow-explain-btn { margin-top:13px;width:100%;padding:11px;border-radius:8px;border:1px solid #c9e1d5;background:#eef7f1;color:#087f7a;font-size:12px;font-weight:750; }
+@keyframes snow-spin { to { transform:rotate(360deg); } }
+@media(max-width:700px) {
+  .snow-chat-launch { right:12px;bottom:255px;padding:11px 14px; }
+  .snow-chat-panel { left:12px;right:12px;width:auto;bottom:calc(30px + env(safe-area-inset-bottom));height:min(580px,calc(100dvh - 185px)); }
+}
+@media(max-width:700px) {
+  .snow-chat-panel { bottom:calc(30px + env(safe-area-inset-bottom) + var(--snow-keyboard-gap,0px));max-height:calc(100dvh - 185px - var(--snow-keyboard-gap,0px)); }
+}
+@media(prefers-reduced-motion:reduce) { .snow-chat-pending svg,.snow-chat-compose button:disabled svg { animation:none; } }
+.snow-chat-messages { scrollbar-width:thin;scrollbar-color:#c3d5c9 transparent; }
+
+/* ── 手机端最终覆盖 ──
+   下面这些选择器在文件后半段才定义，必须排在它们之后才能生效；
+   AI 入口默认收进标题栏，避免浮层按钮再去猜底部面板的高度。 */
+.snow-panel-head-right { display:flex;align-items:center;gap:8px; }
+.snow-chat-inline { display:none; }
+@media(max-width:700px) {
+  .snow-chat-launch { display:none; }
+  .snow-chat-inline { display:grid;place-items:center;flex:0 0 34px;width:34px;height:34px;padding:0;border:0;border-radius:50%;background:#087f7a;color:#fff; }
+  .snow-chat-panel { left:12px;right:12px;width:auto;bottom:calc(var(--snow-bottom-gap) + var(--snow-keyboard-gap,0px));height:min(560px,calc(100dvh - 170px - var(--snow-keyboard-gap,0px)));max-height:calc(100dvh - 170px - var(--snow-keyboard-gap,0px)); }
+  .snow-featured,.snow-filters,.snow-sheet-body { overscroll-behavior:contain; }
+}
+
+/* ── P4 品牌化 + 控件重排（2026-11-06）──
+   追加在文件末尾，以同特异性覆盖前半段的 CitySense 深青配色。
+   地图画布仍是高德白天全彩，这一段只管浮层、控件与地锚。 */
+
+.snow-stage {
+  --snow-dock-h: 56px;
+  /* 常驻 144px 面板改为按需展开，浮层基准只剩胶囊高度 */
+  --snow-panel-h: 0px;
+}
+
+.snow-brand,
+.snow-search,
+.snow-guide-panel,
+.snow-sheet,
+.snow-chat-panel,
+.snow-loading,
+.snow-map-tools {
+  background: var(--brand-surface);
+  border-color: var(--brand-line);
+  color: var(--brand-ink);
+}
+
+.snow-brand { border-left: 4px solid var(--brand-red); }
+.snow-brand-icon { background: #f6e7c8; color: var(--brand-red); }
+.snow-brand h1 { color: var(--brand-red); letter-spacing: 0; }
+.snow-eyebrow { color: var(--brand-muted); }
+.snow-day { background: #f6e7c8; color: #7a5510; }
+.snow-search:focus-within { outline: 2px solid var(--brand-gold); }
+.snow-search input { color: var(--brand-ink); }
+
+.snow-filters button {
+  border-color: var(--brand-line);
+  background: var(--brand-surface);
+  color: var(--brand-ink);
+  border-radius: var(--brand-radius-pill);
+  font-weight: 750;
+}
+.snow-filters button.active {
+  background: var(--brand-red);
+  border-color: var(--brand-red);
+  color: #fff8ec;
+}
+.snow-filters .snow-filter-chip {
+  background: var(--brand-gold);
+  border-color: var(--brand-gold);
+  color: var(--brand-ink);
+}
+.snow-filters .snow-filter-chip.active {
+  background: var(--brand-red);
+  border-color: var(--brand-red);
+  color: #fff8ec;
+}
+
+.snow-panel-tabs button.active { color: var(--brand-red); border-bottom-color: var(--brand-red); }
+.snow-panel-title h2 { color: var(--brand-ink); }
+.snow-feature-card { border-color: var(--brand-line); background: var(--brand-surface); }
+.snow-sheet-close {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border: 0;
+  border-radius: 50%;
+  background: #f6e7c8;
+  color: var(--brand-red);
+}
+.snow-stage button:focus-visible { outline: 2px solid var(--brand-gold); outline-offset: 3px; }
+
+/* 地图工具收进「更多」后横排在胶囊上方 */
+.snow-map-tools {
+  top: auto;
+  right: 12px;
+  bottom: calc(var(--snow-dock-h) + var(--snow-bottom-gap) + 12px);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+.snow-map-tools button { color: var(--brand-ink); }
+.snow-map-tools button:hover { background: #f6e7c8; }
+
+/* 右侧 AI 伴游圆钮 */
+.snow-ai-fab {
+  position: absolute;
+  right: 12px;
+  top: 45%;
+  z-index: 27;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid var(--brand-gold-light);
+  background: var(--brand-gold);
+  color: var(--brand-ink);
+  box-shadow: var(--brand-shadow);
+}
+.snow-ai-fab span { font-size: 10px; font-weight: 900; line-height: 1; margin-top: -4px; }
+
+/* 底部悬浮胶囊：定位 / 线路 / 中心扫码 / 列表 / 更多
+   前半段 .snow-dock 是旧的常驻白色控制卡（column + 内边距 + 白底），
+   这里必须显式清掉，否则胶囊会退化成三行竖排大卡、并压住 AI 圆钮。 */
+.snow-dock {
+  position: absolute;
+  left: 50%;
+  right: auto;
+  top: auto;
+  bottom: var(--snow-bottom-gap);
+  transform: translateX(-50%);
+  z-index: 30;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  max-width: calc(100% - 24px);
+}
+.snow-dock-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px;
+  border: 1px solid var(--brand-line);
+  border-radius: var(--brand-radius-pill);
+  background: var(--brand-surface);
+  box-shadow: var(--brand-shadow);
+}
+.snow-dock-bar > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--brand-radius-pill);
+  background: transparent;
+  color: var(--brand-ink);
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.snow-dock-bar > button.active { background: #f6e7c8; }
+.snow-dock-bar > .snow-dock-scan {
+  min-width: 64px;
+  min-height: 48px;
+  margin-top: -14px;
+  border: 2px solid var(--brand-gold-light);
+  background: var(--brand-red);
+  color: #fff8ec;
+  box-shadow: 0 8px 20px rgb(142 43 38 / 32%);
+}
+.snow-dock-side {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border: 1px solid var(--brand-line);
+  border-radius: 50%;
+  background: var(--brand-surface);
+  color: var(--brand-ink);
+  box-shadow: var(--brand-shadow);
+}
+
+/* 按需展开的面板统一抬到胶囊之上 */
+.snow-guide-panel,
+.snow-sheet,
+.snow-chat-panel,
+.snow-data-note {
+  bottom: calc(var(--snow-dock-h) + var(--snow-bottom-gap) + 12px);
+}
+.snow-toast {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--snow-dock-h) + var(--snow-bottom-gap) + 24px);
+  transform: translateX(-50%);
+  z-index: 40;
+  padding: 10px 16px;
+  border-radius: var(--brand-radius-pill);
+  background: var(--brand-ink);
+  color: #fff8ec;
+  font-size: 12px;
+  font-weight: 750;
+  white-space: nowrap;
+  box-shadow: var(--brand-shadow);
+}
+
+@media (max-width: 700px) {
+  /* 高德 logo 与版权行必须可见：把整组底部浮层基准抬高，给归属信息留出条带 */
+  .snow-stage { --snow-bottom-gap: calc(30px + env(safe-area-inset-bottom, 0px)); }
+  .snow-notice { top: calc(var(--snow-top-gap) + 178px); }
+  .snow-data-note { top: auto; right: 12px; }
+  .snow-guide-panel { left: 12px; right: 12px; width: auto; }
+  .snow-sheet { left: 12px; right: 12px; width: auto; max-height: 46vh; }
+  .snow-chat-panel {
+    left: 12px;
+    right: 12px;
+    width: auto;
+    bottom: calc(var(--snow-dock-h) + var(--snow-bottom-gap) + 12px + var(--snow-keyboard-gap, 0px));
+  }
+  .snow-ai-fab {
+    right: 12px;
+    top: auto;
+    bottom: calc(var(--snow-dock-h) + var(--snow-bottom-gap) + 86px);
+    width: 44px;
+    height: 44px;
+  }
+  .snow-map-tools { left: 12px; justify-content: center; }
+  .snow-dock { width: calc(100% - 24px); justify-content: center; }
+  .snow-dock-bar > button { padding: 0 10px; font-size: 11px; }
+  .snow-dock-bar > .snow-dock-scan { min-width: 58px; }
+}

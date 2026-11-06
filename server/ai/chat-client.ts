@@ -247,13 +247,28 @@ class ZhipuChatClient implements ChatCompletionClient {
 }
 
 /**
- * 创建默认 chat 客户端。无 OPENAI_API_KEY 时返回 undefined(触发降级)。
+ * 解析模型凭据：SNOW_LLM_API_KEY 优先，OPENAI_API_KEY 仅作兼容。
+ *
+ * 真实环境变量优先于 .env 文件，而 OPENAI_API_KEY 是个被大量工具占用的通用名。
+ * 开发机只要在 User 级设过它，.env 里写的凭据就会被静默覆盖，
+ * 表现为「配置明明是对的却一直 401」。用项目专属变量规避这类劫持。
+ */
+export function resolveLlmApiKey(): string | undefined {
+  return (
+    process.env.SNOW_LLM_API_KEY?.trim() ||
+    process.env.OPENAI_API_KEY?.trim() ||
+    undefined
+  );
+}
+
+/**
+ * 创建默认 chat 客户端。取不到凭据时返回 undefined(触发降级)。
  *
  * 配置优先级:CHAT_LLM_BASE_URL / OPENAI_BASE_URL / 默认 paas/v4 通用端点。
  * 模型:CHAT_LLM_MODEL(默认 glm-4-flash,阶段 0 实测的免费可用模型)。
  */
 export function createDefaultChatClient(): ChatCompletionClient | undefined {
-  const apiKey = process.env.OPENAI_API_KEY?.trim();
+  const apiKey = resolveLlmApiKey();
 
   if (!apiKey) {
     return undefined;

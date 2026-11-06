@@ -9,10 +9,10 @@ export default defineConfig([
     ".next/**",
     "out/**",
     "build/**",
-    "docs/**/*.cjs",
-    "data/damai-session/**",
-    "tools/damai-search/.browser-profile/**",
-    "tools/damai-search/output/**",
+    // Taro 子工程自带自己的 lint 配置，不参与 Next 的规则集
+    "mp/**",
+    // 打卡系统的本地文件后端
+    ".data/**",
     "next-env.d.ts"
   ])
 ]);

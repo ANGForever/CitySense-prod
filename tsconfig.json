@@ -30,13 +30,25 @@
   },
   "include": [
     "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
+    "app/**/*.ts",
+    "app/**/*.tsx",
+    "components/**/*.ts",
+    "components/**/*.tsx",
+    "hooks/**/*.ts",
+    "hooks/**/*.tsx",
+    "server/**/*.ts",
+    "tests/**/*.ts",
+    "types/**/*.ts",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     ".next/dev/dev/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "mp",
+    ".data",
+    ".next",
+    "out",
+    "build"
   ]
 }
